@@ -10,6 +10,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(mCreateNoSilenceButton);
     mCreateNoSilenceButton.setButtonText("Create a \"no silence\" file");
     mCreateNoSilenceButton.onClick = [this] {CreateNoSilenceClicked(); };
+    mCreateNoSilenceButton.setEnabled(false);
 
     // Make sure you set the size of the component after
     // you add any child components.
@@ -110,6 +111,8 @@ void MainComponent::SourceSelectClicked()
 
             mSampleRate = reader->sampleRate;
             mBitsPerSample = reader->bitsPerSample;
+
+            mCreateNoSilenceButton.setEnabled(true);
         } 
     }
 }
@@ -183,29 +186,16 @@ juce::AudioBuffer<float> MainComponent::GetRidOfSilence()
         startCopyFrom = to;
     }
 
-    /*for (int channel{ 0 }; channel < resultBuffer.getNumChannels(); channel++)
-        resultBuffer.copyFrom(channel,
-            0,
-            mAudioBuffer,
-            channel,
-            0,
-            mAudioBuffer.getNumSamples()/2);*/
-
     std::vector<float> temp1;
     for (int i{ 0 }; i < 100; i++)
         temp1.push_back(resultBuffer.getSample(0, i*1));
 
     resultBuffer.setSize(resultBuffer.getNumChannels(), copyToIndex, true, true, true);
-    //resultBuffer.setSize(resultBuffer.getNumChannels(), mAudioBuffer.getNumSamples() / 2, true, true, true);
     return resultBuffer;
 }
 
 void MainComponent::CreateNoSilenceClicked()
 {
-    //
-    //  Handle no-opened-file case
-    //
-
     juce::File file{ "D:/C++ Projects/Linguini/testfiles/result.wav" };
     file.deleteFile();
 
