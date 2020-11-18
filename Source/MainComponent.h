@@ -33,7 +33,7 @@ private:
     // Your private member variables go here...
     juce::TextButton mSourceSelectButton;
     juce::TextButton mCreateNoSilenceButton;
-
+    juce::Label mSourceLabel;
 
     struct SilenceCuttingSettings
     {

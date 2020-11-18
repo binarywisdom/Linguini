@@ -7,6 +7,9 @@ MainComponent::MainComponent()
     mSourceSelectButton.setButtonText("Select a source...");
     mSourceSelectButton.onClick = [this] {SourceSelectClicked(); };
 
+    addAndMakeVisible(mSourceLabel);
+    mSourceLabel.setText("Select a source .wav file", juce::dontSendNotification);
+
     addAndMakeVisible(mCreateNoSilenceButton);
     mCreateNoSilenceButton.setButtonText("Create a \"no silence\" file");
     mCreateNoSilenceButton.onClick = [this] {CreateNoSilenceClicked(); };
@@ -84,8 +87,9 @@ void MainComponent::resized()
     // If you add any child components, this is where you should
     // update their positions.
 
-    mSourceSelectButton.setBounds(getWidth()/2, 10, 200, 100);
-    mCreateNoSilenceButton.setBounds(getWidth()/2, 150, 200, 100);
+    mSourceSelectButton.setBounds(10, 10, 200, 100);
+    mSourceLabel.setBounds(220, 10, 400, 100);
+    mCreateNoSilenceButton.setBounds(10, 150, 200, 100);
 }
 
 void MainComponent::SourceSelectClicked()
@@ -112,6 +116,7 @@ void MainComponent::SourceSelectClicked()
             mSampleRate = reader->sampleRate;
             mBitsPerSample = reader->bitsPerSample;
 
+            mSourceLabel.setText(file.getFullPathName(), juce::dontSendNotification);
             mCreateNoSilenceButton.setEnabled(true);
         } 
     }
