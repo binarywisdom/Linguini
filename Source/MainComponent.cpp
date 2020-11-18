@@ -90,7 +90,7 @@ void MainComponent::resized()
 
 void MainComponent::SourceSelectClicked()
 {
-    juce::FileChooser chooser("Select a Wave file to play...",
+    juce::FileChooser chooser("Select a source Wave file...",
         {},
         "*.wav");                                       
 
@@ -196,11 +196,24 @@ juce::AudioBuffer<float> MainComponent::GetRidOfSilence()
 
 void MainComponent::CreateNoSilenceClicked()
 {
-    juce::File file{ "D:/C++ Projects/Linguini/testfiles/result.wav" };
-    file.deleteFile();
+    juce::FileChooser chooser("Select a resulting Wave file...",
+        {},
+        "*.wav");
+
+    juce::File outFile;
+
+    if (chooser.browseForFileToSave(true))
+    {
+        outFile = chooser.getResult();
+    }
+    else
+        return;
+
+    if(outFile.exists())
+        outFile.deleteFile();
 
     juce::ScopedPointer<juce::FileOutputStream> fStream{
-        file.createOutputStream().release() };
+        outFile.createOutputStream().release() };
 
     juce::WavAudioFormat afObject;
  
