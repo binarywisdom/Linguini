@@ -114,6 +114,92 @@ void MainComponent::SourceSelectClicked()
     }
 }
 
+juce::AudioBuffer<float> MainComponent::GetRidOfSilence()
+{
+    //  0.2  0.6  0.7  0.0  0.2
+    //  0.1  0.3  0.0  0.1  0.4
+    //  from                    to     
+
+    juce::AudioBuffer<float> resultBuffer{ mAudioBuffer.getNumChannels(), mAudioBuffer.getNumSamples() };
+    int totalSamples{ mAudioBuffer.getNumSamples() };
+
+    auto FindNextSilence = [this, totalSamples](int startFrom)
+    {
+        auto IsQuite = [this](int index)
+        {
+            for (int channel{ 0 }; channel < mAudioBuffer.getNumChannels(); channel++)
+                if (mAudioBuffer.getSample(channel, index) < abs(mSilenceCuttingSettings.threshold))
+                    return true;
+
+            return false;
+        };
+
+        int from{ startFrom };
+        int quiteSamplesLimit{ 
+            static_cast<int>(mSilenceCuttingSettings.maxSilence * mSampleRate) }; //.count()) * 
+            
+        while (from < totalSamples)
+        {
+            while (from < totalSamples && !IsQuite(from))
+                from++;
+
+            if (from == totalSamples)
+                return std::pair<int, int>{totalSamples, totalSamples};
+
+            int numQuiteSamples{ 1 };
+            int to{ from + 1 };
+            while (to < totalSamples && IsQuite(to))
+                to++;
+
+            if (to - from > quiteSamplesLimit)
+                return std::pair<int, int>{from, to};
+            else
+                from = to;
+        }
+
+        return std::pair<int, int>{totalSamples, totalSamples};
+    };
+
+    std::vector<float> temp2;
+    for (int i{ 0 }; i < 100; i++)
+        temp2.push_back(mAudioBuffer.getSample(0, 100+i*1));
+
+    int startCopyFrom{ 0 };
+    int copyToIndex{ 0 };
+    while (startCopyFrom < totalSamples)
+    {
+        auto [from, to] = FindNextSilence(startCopyFrom);
+
+        if(startCopyFrom != from)
+            for (int channel{ 0 }; channel < resultBuffer.getNumChannels(); channel++)
+                resultBuffer.copyFrom(channel, 
+                                    copyToIndex, 
+                                    mAudioBuffer, 
+                                    channel, 
+                                    startCopyFrom, 
+                                    from - startCopyFrom);
+
+        copyToIndex += from - startCopyFrom;
+        startCopyFrom = to;
+    }
+
+    /*for (int channel{ 0 }; channel < resultBuffer.getNumChannels(); channel++)
+        resultBuffer.copyFrom(channel,
+            0,
+            mAudioBuffer,
+            channel,
+            0,
+            mAudioBuffer.getNumSamples()/2);*/
+
+    std::vector<float> temp1;
+    for (int i{ 0 }; i < 100; i++)
+        temp1.push_back(resultBuffer.getSample(0, i*1));
+
+    resultBuffer.setSize(resultBuffer.getNumChannels(), copyToIndex, true, true, true);
+    //resultBuffer.setSize(resultBuffer.getNumChannels(), mAudioBuffer.getNumSamples() / 2, true, true, true);
+    return resultBuffer;
+}
+
 void MainComponent::CreateNoSilenceClicked()
 {
     //
@@ -139,5 +225,7 @@ void MainComponent::CreateNoSilenceClicked()
         )};
     fStream.release();
 
-    writer->writeFromAudioSampleBuffer(mAudioBuffer, 0, mAudioBuffer.getNumSamples());
+    juce::AudioBuffer<float> noSilenceBuffer{ GetRidOfSilence() };
+
+    writer->writeFromAudioSampleBuffer(noSilenceBuffer, 0, noSilenceBuffer.getNumSamples());
 }
